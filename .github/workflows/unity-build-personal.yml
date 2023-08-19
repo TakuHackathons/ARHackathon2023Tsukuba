@@ -2,7 +2,7 @@ name: execute-unity-builds
 on:
   push:
     branches:
-    - unity-deploy
+    - master
 jobs:
   build:
     name: ${{ matrix.targetPlatform }}
