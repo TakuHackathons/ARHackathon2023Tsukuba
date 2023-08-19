@@ -18,7 +18,7 @@ jobs:
           - Android # Build an Android .apk standalone app.
     steps:
       - name: clean docker image
-        run: docker image prune --force
+        run: docker rmi $(docker images -q)
 
       - name: Set up Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
