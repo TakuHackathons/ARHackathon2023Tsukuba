@@ -991,6 +991,7 @@ namespace Google.XR.ARCoreExtensions.Samples.Geospatial
                         if (anchor != null)
                         {
                             _historyCollection.Collection.Add(history);
+                            ComponentUtil.InstantiateTo(anchor.gameObject, actorModelObj);
                         }
 
                         ClearAllButton.gameObject.SetActive(_anchorObjects.Count > 0);
@@ -1139,8 +1140,7 @@ namespace Google.XR.ARCoreExtensions.Samples.Geospatial
             if (anchor != null)
             {
                 GameObject anchorGO = history.AnchorType == AnchorType.Geospatial ?
-                    //                    Instantiate(GeospatialPrefab, anchor.transform) :
-                    Instantiate(actorModelObj, anchor.transform) :
+                    Instantiate(GeospatialPrefab, anchor.transform) :
                     Instantiate(TerrainPrefab, anchor.transform);
                 anchor.gameObject.SetActive(!terrain);
                 anchorGO.transform.parent = anchor.gameObject.transform;
