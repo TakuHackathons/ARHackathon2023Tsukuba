@@ -308,6 +308,8 @@ namespace Google.XR.ARCoreExtensions.Samples.Geospatial
         private IEnumerator _startLocationService = null;
         private IEnumerator _asyncCheck = null;
 
+        [SerializeField] private GameObject actorModelObj;
+
         /// <summary>
         /// Callback handling "Get Started" button click event in Privacy Prompt.
         /// </summary>
@@ -989,6 +991,7 @@ namespace Google.XR.ARCoreExtensions.Samples.Geospatial
                         if (anchor != null)
                         {
                             _historyCollection.Collection.Add(history);
+                            ComponentUtil.InstantiateTo(anchor.gameObject, actorModelObj);
                         }
 
                         ClearAllButton.gameObject.SetActive(_anchorObjects.Count > 0);
