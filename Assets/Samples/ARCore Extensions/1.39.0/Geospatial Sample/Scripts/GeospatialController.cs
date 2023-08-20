@@ -295,7 +295,9 @@ namespace Google.XR.ARCoreExtensions.Samples.Geospatial
         /// </summary>
         private bool _clearStreetscapeGeometryRenderObjects = false;
 
-        private bool _waitingForLocationService = false;
+		private TrackingState earthTrackingState;
+
+		private bool _waitingForLocationService = false;
         private bool _isInARView = false;
         private bool _isReturning = false;
         private bool _isLocalizing = false;
@@ -537,91 +539,91 @@ namespace Google.XR.ARCoreExtensions.Samples.Geospatial
             }
         }
 
-        /// <summary>
-        /// Unity's Update() method.
-        /// </summary>
-        public void Update()
-        {
-            if (!_isInARView)
-            {
-                return;
-            }
+		/// <summary>
+		/// Unity's Update() method.
+		/// </summary>
+		public void Update()
+		{
+			if (!_isInARView)
+			{
+				return;
+			}
 
-            UpdateDebugInfo();
+			UpdateDebugInfo();
 
-            // Check session error status.
-            LifecycleUpdate();
-            if (_isReturning)
-            {
-                return;
-            }
+			// Check session error status.
+			LifecycleUpdate();
+			if (_isReturning)
+			{
+				return;
+			}
 
-            if (ARSession.state != ARSessionState.SessionInitializing &&
-                ARSession.state != ARSessionState.SessionTracking)
-            {
-                return;
-            }
+			if (ARSession.state != ARSessionState.SessionInitializing &&
+				ARSession.state != ARSessionState.SessionTracking)
+			{
+				return;
+			}
 
-            // Check feature support and enable Geospatial API when it's supported.
-            var featureSupport = EarthManager.IsGeospatialModeSupported(GeospatialMode.Enabled);
-            switch (featureSupport)
-            {
-                case FeatureSupported.Unknown:
-                    return;
-                case FeatureSupported.Unsupported:
-                    ReturnWithReason("The Geospatial API is not supported by this device.");
-                    return;
-                case FeatureSupported.Supported:
-                    if (ARCoreExtensions.ARCoreExtensionsConfig.GeospatialMode ==
-                        GeospatialMode.Disabled)
-                    {
-                        Debug.Log("Geospatial sample switched to GeospatialMode.Enabled.");
-                        ARCoreExtensions.ARCoreExtensionsConfig.GeospatialMode =
-                            GeospatialMode.Enabled;
-                        ARCoreExtensions.ARCoreExtensionsConfig.StreetscapeGeometryMode =
-                            StreetscapeGeometryMode.Enabled;
-                        _configurePrepareTime = 3.0f;
-                        _enablingGeospatial = true;
-                        return;
-                    }
+			// Check feature support and enable Geospatial API when it's supported.
+			var featureSupport = EarthManager.IsGeospatialModeSupported(GeospatialMode.Enabled);
+			switch (featureSupport)
+			{
+				case FeatureSupported.Unknown:
+					return;
+				case FeatureSupported.Unsupported:
+					ReturnWithReason("The Geospatial API is not supported by this device.");
+					return;
+				case FeatureSupported.Supported:
+					if (ARCoreExtensions.ARCoreExtensionsConfig.GeospatialMode ==
+						GeospatialMode.Disabled)
+					{
+						Debug.Log("Geospatial sample switched to GeospatialMode.Enabled.");
+						ARCoreExtensions.ARCoreExtensionsConfig.GeospatialMode =
+							GeospatialMode.Enabled;
+						ARCoreExtensions.ARCoreExtensionsConfig.StreetscapeGeometryMode =
+							StreetscapeGeometryMode.Enabled;
+						_configurePrepareTime = 3.0f;
+						_enablingGeospatial = true;
+						return;
+					}
 
-                    break;
-            }
+					break;
+			}
 
-            // Waiting for new configuration to take effect.
-            if (_enablingGeospatial)
-            {
-                _configurePrepareTime -= Time.deltaTime;
-                if (_configurePrepareTime < 0)
-                {
-                    _enablingGeospatial = false;
-                }
-                else
-                {
-                    return;
-                }
-            }
+			// Waiting for new configuration to take effect.
+			if (_enablingGeospatial)
+			{
+				_configurePrepareTime -= Time.deltaTime;
+				if (_configurePrepareTime < 0)
+				{
+					_enablingGeospatial = false;
+				}
+				else
+				{
+					return;
+				}
+			}
 
-            // Check earth state.
-            var earthState = EarthManager.EarthState;
-            if (earthState == EarthState.ErrorEarthNotReady)
-            {
-                SnackBarText.text = _localizationInitializingMessage;
-                return;
-            }
-            else if (earthState != EarthState.Enabled)
-            {
-                string errorMessage =
-                    "Geospatial sample encountered an EarthState error: " + earthState;
-                Debug.LogWarning(errorMessage);
-                SnackBarText.text = errorMessage;
-                return;
-            }
+			// Check earth state.
+			var earthState = EarthManager.EarthState;
+			if (earthState == EarthState.ErrorEarthNotReady)
+			{
+				SnackBarText.text = _localizationInitializingMessage;
+				return;
+			}
+			else if (earthState != EarthState.Enabled)
+			{
+				string errorMessage =
+					"Geospatial sample encountered an EarthState error: " + earthState;
+				Debug.LogWarning(errorMessage);
+				SnackBarText.text = errorMessage;
+				return;
+			}
 
-            // Check earth localization.
-            bool isSessionReady = ARSession.state == ARSessionState.SessionTracking &&
-                Input.location.status == LocationServiceStatus.Running;
-            var earthTrackingState = EarthManager.EarthTrackingState;
+			// Check earth localization.
+			bool isSessionReady = ARSession.state == ARSessionState.SessionTracking &&
+				Input.location.status == LocationServiceStatus.Running;
+			this.earthTrackingState = EarthManager.EarthTrackingState;
             var pose = earthTrackingState == TrackingState.Tracking ?
                 EarthManager.CameraGeospatialPose : new GeospatialPose();
             if (!isSessionReady || earthTrackingState != TrackingState.Tracking ||
@@ -745,6 +747,12 @@ namespace Google.XR.ARCoreExtensions.Samples.Geospatial
                 pose.VerticalAccuracy.ToString("F2"),
                 pose.EunRotation.ToString("F1"),
                 pose.OrientationYawAccuracy.ToString("F1"));
+                var anchor = AnchorManager.AddAnchor(
+                  36.081283f,
+                  140.114206f,
+                  39.9509,
+                  Quaternion.identity);
+                ComponentUtil.InstantiateTo(anchor.gameObject, actorModelObj);
             }
             else
             {
@@ -980,7 +988,6 @@ namespace Google.XR.ARCoreExtensions.Samples.Geospatial
 							// Anchor returned will be null, the coroutine will handle creating
 							// the anchor when the promise is done.
 							var anchor = PlaceARAnchor(history, modifiedPose, hitResults[0].trackableId);
-							ComponentUtil.InstantiateTo(anchor.gameObject, actorModelObj);
 						}
                     }
                     else
@@ -992,7 +999,6 @@ namespace Google.XR.ARCoreExtensions.Samples.Geospatial
                         if (anchor != null)
                         {
                             _historyCollection.Collection.Add(history);
-                            ComponentUtil.InstantiateTo(anchor.gameObject, actorModelObj);
                         }
 
                         ClearAllButton.gameObject.SetActive(_anchorObjects.Count > 0);
