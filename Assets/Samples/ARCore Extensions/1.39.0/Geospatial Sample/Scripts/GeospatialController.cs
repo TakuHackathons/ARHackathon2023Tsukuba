@@ -977,10 +977,11 @@ namespace Google.XR.ARCoreExtensions.Samples.Geospatial
                             GeospatialAnchorHistory history =
                                 CreateHistory(modifiedPose, _anchorType);
 
-                            // Anchor returned will be null, the coroutine will handle creating
-                            // the anchor when the promise is done.
-                            PlaceARAnchor(history, modifiedPose, hitResults[0].trackableId);
-                        }
+							// Anchor returned will be null, the coroutine will handle creating
+							// the anchor when the promise is done.
+							var anchor = PlaceARAnchor(history, modifiedPose, hitResults[0].trackableId);
+							ComponentUtil.InstantiateTo(anchor.gameObject, actorModelObj);
+						}
                     }
                     else
                     {
